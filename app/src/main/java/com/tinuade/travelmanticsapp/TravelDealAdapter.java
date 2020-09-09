@@ -1,10 +1,12 @@
 package com.tinuade.travelmanticsapp;
 
 import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -15,6 +17,7 @@ import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
 
@@ -23,12 +26,16 @@ public class TravelDealAdapter extends RecyclerView.Adapter<TravelDealAdapter.Tr
     private DatabaseReference databaseReference;
     private ArrayList<TravelDeal> deals;
     private ChildEventListener childEventListener;
+    private FirebaseDatabase firebaseDatabase;
 
-    public TravelDealAdapter(){
 
-        FirebaseUtils.openDatabaseReference("Traveldeals");
+    public TravelDealAdapter() {
+
+//        FirebaseUtils.openDatabaseReference("Traveldeals",);
+        firebaseDatabase = FirebaseDatabase.getInstance();
         databaseReference = FirebaseUtils.databaseReference;
-        deals=FirebaseUtils.travelDeals;
+        databaseReference = firebaseDatabase.getReference().child("Traveldeals");
+        deals = FirebaseUtils.travelDeals;
 
         childEventListener = new ChildEventListener() {
             @Override
@@ -67,15 +74,37 @@ public class TravelDealAdapter extends RecyclerView.Adapter<TravelDealAdapter.Tr
     }
 
 
-    public class TravelDealsViewHolder extends RecyclerView.ViewHolder {
-        TextView travelDealTitle;
+    public class TravelDealsViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+        TextView travelDealTitle, travelDealDescription, travelDealPrice;
+        ImageView travelDealImage;
+
         public TravelDealsViewHolder(@NonNull View itemView) {
             super(itemView);
-            travelDealTitle=itemView.findViewById(R.id.travelDealsTitle);
+            travelDealTitle = itemView.findViewById(R.id.travelDealsTitle);
+            travelDealDescription = itemView.findViewById(R.id.travelDealDescription);
+            travelDealPrice = itemView.findViewById(R.id.travelDealsPrice);
+            travelDealImage = itemView.findViewById(R.id.travelDealsImage);
+            itemView.setOnClickListener(this);
+
         }
-        public void bind(TravelDeal deal){
+
+        public void bind(TravelDeal deal) {
             travelDealTitle.setText(deal.getTitle());
+            travelDealPrice.setText(deal.getPrice());
+            travelDealDescription.setText(deal.getDescription());
+//            travelDealImage.setImageResource(deal.getImageUrl().);
         }
+
+        @Override
+        public void onClick(View view) {
+            int position = getAdapterPosition();
+            Log.d("Click", String.valueOf(position));
+            TravelDeal selectedDeal = deals.get(position);
+            Intent intent = new Intent(view.getContext(), DealActivity.class);
+            intent.putExtra("Deals", selectedDeal);
+            view.getContext().startActivity(intent);
+        }
+
     }
 
     @NonNull

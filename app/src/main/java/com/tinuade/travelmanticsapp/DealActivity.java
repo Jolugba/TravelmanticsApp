@@ -1,5 +1,6 @@
 package com.tinuade.travelmanticsapp;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -13,10 +14,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
-public class MainActivity extends AppCompatActivity {
+public class DealActivity extends AppCompatActivity {
     EditText title;
     EditText price;
     EditText description;
+    TravelDeal travelDeal;
     private FirebaseDatabase firebaseDatabase;
     private DatabaseReference dataBaseReference;
 
@@ -28,9 +30,17 @@ public class MainActivity extends AppCompatActivity {
         title = findViewById(R.id.titleEditText);
         price = findViewById(R.id.priceEditText);
         description = findViewById(R.id.txtDescription);
-
         firebaseDatabase = FirebaseDatabase.getInstance();
         dataBaseReference = firebaseDatabase.getReference().child(getString(R.string.traveldeals));
+        Intent intent = getIntent();
+        TravelDeal deal = (TravelDeal) intent.getSerializableExtra("Deals");
+        if (deal == null) {
+            deal = new TravelDeal();
+        }
+        this.travelDeal = deal;
+        title.setText(travelDeal.getTitle());
+        price.setText(travelDeal.getPrice());
+        description.setText(travelDeal.getDescription());
 
     }
 
@@ -49,6 +59,12 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this, R.string.dealSaveToast, Toast.LENGTH_SHORT).show();
                 refresh();
                 return true;
+            case R.id.delete_deal:
+                deleteDeal();
+                Toast.makeText(this, "Deal deleted", Toast.LENGTH_SHORT).show();
+                refresh();
+                backToList();
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -58,12 +74,26 @@ public class MainActivity extends AppCompatActivity {
 
     // save the travels on the database
     private void saveDeal() {
-        String dealTitle = title.getText().toString();
-        String dealPrice = price.getText().toString();
-        String dealDescription = description.getText().toString();
-        TravelDeal deal = new TravelDeal(dealTitle, dealDescription, dealPrice, "");
-        dataBaseReference.push().setValue(deal);
+        travelDeal.setTitle(title.getText().toString());
+        travelDeal.setPrice(price.getText().toString());
+        travelDeal.setDescription(description.getText().toString());
+        if (travelDeal.getId() == null) {
+            dataBaseReference.push().setValue(travelDeal);
+        } else
+            dataBaseReference.child(travelDeal.getId()).setValue(travelDeal);
+    }
 
+    private void deleteDeal() {
+        if (travelDeal == null) {
+            Toast.makeText(this, "Please save the deal before deleting", Toast.LENGTH_LONG).show();
+            return;
+        }
+        dataBaseReference.child(travelDeal.getId()).removeValue();
+    }
+
+    private void backToList() {
+        Intent intent = new Intent(this, ListActivity.class);
+        startActivity(intent);
     }
 
     // clean up the editText
